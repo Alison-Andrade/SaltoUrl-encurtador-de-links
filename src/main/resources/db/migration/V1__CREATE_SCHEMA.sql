@@ -6,7 +6,7 @@ CREATE TABLE users (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE refresh_token (
+CREATE TABLE refresh_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token_hash VARCHAR(255) NOT NULL UNIQUE,
@@ -15,7 +15,7 @@ CREATE TABLE refresh_token (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE link (
+CREATE TABLE links (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     code VARCHAR(10) NOT NULL UNIQUE,
@@ -25,16 +25,15 @@ CREATE TABLE link (
     active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-CREATE TABLE click_event (
+CREATE TABLE click_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    link_id UUID NOT NULL REFERENCES link(id) ON DELETE CASCADE,
+    link_id UUID NOT NULL REFERENCES links(id) ON DELETE CASCADE,
     clicked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ip_hash VARCHAR(64) NOT NULL,
     user_agent TEXT NOT NULL,
     country VARCHAR(2) NULL
 );
 
--- Índices para otimizar as buscas
-CREATE INDEX idx_link_code ON link(code);
-CREATE INDEX idx_click_event_link_id ON click_event(link_id);
-CREATE INDEX idx_refresh_token_user_id ON refresh_token(user_id);
+CREATE INDEX idx_link_code ON links(code);
+CREATE INDEX idx_click_event_link_id ON click_events(link_id);
+CREATE INDEX idx_refresh_token_user_id ON refresh_tokens(user_id);
