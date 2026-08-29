@@ -1,9 +1,9 @@
 package com.alisonsfa.SaltoUrl.domain.entity;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.validator.constraints.UUID;
 
 import com.alisonsfa.SaltoUrl.domain.enums.Role;
 
