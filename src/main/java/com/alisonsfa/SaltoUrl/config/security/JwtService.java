@@ -4,17 +4,23 @@ import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
+@Service 
 public class JwtService {
     
-    private static final String SECRET_KEY = "your-secret-key";
+    @Value("${jwt.secret.key}")
+    private static String secretKey;
+    
     private static final long EXPIRATION_TIME = 86400000;
 
     private Key getSingnInKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
     public String generateToken(UUID userId, String email) {

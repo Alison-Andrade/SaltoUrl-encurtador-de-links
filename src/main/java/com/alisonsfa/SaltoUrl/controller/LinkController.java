@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,9 +51,10 @@ public class LinkController {
     @PostMapping("/links")
     @ResponseStatus(HttpStatus.CREATED)
     public LinkResponse create(@RequestBody @Valid LinkCreateRequest request) {
-        UUID fakeUserId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        String userIdString = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UUID userId = UUID.fromString(userIdString);
 
-        LinkResponse response = linkService.createLink(request.originalUrl(), fakeUserId);
+        LinkResponse response = linkService.createLink(request.originalUrl(), userId);
 
         return response;
     }
