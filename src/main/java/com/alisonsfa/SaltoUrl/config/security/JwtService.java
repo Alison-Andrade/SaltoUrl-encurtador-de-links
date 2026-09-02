@@ -15,7 +15,7 @@ import io.jsonwebtoken.security.Keys;
 public class JwtService {
     
     @Value("${jwt.secret.key}")
-    private static String secretKey;
+    private String secretKey;
     
     private static final long EXPIRATION_TIME = 86400000;
 
