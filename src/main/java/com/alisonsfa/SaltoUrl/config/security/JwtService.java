@@ -1,5 +1,6 @@
 package com.alisonsfa.SaltoUrl.config.security;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 
 @Service 
 public class JwtService {
@@ -31,6 +33,13 @@ public class JwtService {
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(getSingnInKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    @PostConstruct 
+    public void validateSecretKey() {
+        if (secretKey == null || secretKey.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT_SECRET invalid or insecure! The key must be at least 32 bytes.");
+        }
     }
 
 
