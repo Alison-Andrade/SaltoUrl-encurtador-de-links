@@ -3,6 +3,7 @@ package com.alisonsfa.SaltoUrl.service;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
@@ -26,6 +27,8 @@ public class LinkService {
     private final LinkRepository linkRepository;
     private final ClickEventPublisher clickEventPublisher;
     private final UserRepository userRepository;
+
+    private final SecureRandom secureRandom = new SecureRandom();
 
     public LinkService(LinkRepository linkRepository, UserRepository userRepository, ClickEventPublisher clickEventPublisher) {
         this.linkRepository = linkRepository;
@@ -92,14 +95,14 @@ public class LinkService {
     private String generateUniqueCode() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder codeBuilder = new StringBuilder();
-        Random rnd = new Random();
 
         String newCode;
 
         do {
             codeBuilder.setLength(0);
             for (int i = 0; i < 6; i++) {
-                codeBuilder.append(characters.charAt(rnd.nextInt(characters.length())));
+                int index = secureRandom.nextInt(characters.length());
+                codeBuilder.append(characters.charAt(index));
             }
             newCode = codeBuilder.toString();
         } while (linkRepository.findByCodeAndActiveTrue(newCode).isPresent());
