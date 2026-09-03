@@ -7,8 +7,6 @@ RUN --mount=type=cache,target=/root/.m2 mvn dependency:go-offline -B
 COPY src ./src
 RUN --mount=type=cache,target=/root/.m2 mvn package -DskipTests
 
-RUN mvn clean package -DskipTests
-
 FROM eclipse-temurin:26-jre-alpine
 WORKDIR /app
 
