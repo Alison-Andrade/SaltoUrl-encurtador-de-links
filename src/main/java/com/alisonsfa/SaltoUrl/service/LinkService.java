@@ -5,7 +5,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Optional;
-import java.util.Random;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;

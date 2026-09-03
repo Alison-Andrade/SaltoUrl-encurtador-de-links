@@ -48,7 +48,7 @@ public class AuthService {
         return userRepository.findByEmail(email)
                 .filter(user -> passwordEncoder.matches(rawPassword, user.getPasswordHash()))
                 .map(user -> {
-                    String token = jwtService.generateToken(user.getId(), user.getEmail());
+                    String token = jwtService.generateToken(user);
                     log.debug("Login bem sucedido para o usuário: {}", email);
                     return new AuthResponse(token, "Bearer");
                 });
