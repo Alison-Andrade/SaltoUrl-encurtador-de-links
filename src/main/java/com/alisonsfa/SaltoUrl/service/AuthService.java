@@ -1,14 +1,14 @@
 package com.alisonsfa.SaltoUrl.service;
 
-import java.util.Optional;
-
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.alisonsfa.SaltoUrl.config.security.JwtService;
 import com.alisonsfa.SaltoUrl.domain.entity.User;
 import com.alisonsfa.SaltoUrl.domain.enums.Role;
-import com.alisonsfa.SaltoUrl.dto.AuthResponse;
 import com.alisonsfa.SaltoUrl.repository.UserRepository;
 
 import lombok.extern.slf4j.Slf4j;
@@ -17,14 +17,16 @@ import lombok.extern.slf4j.Slf4j;
 @Service 
 public class AuthService {
     
+    private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
     }
 
     public boolean register(String email, String rawPassword) {
@@ -44,14 +46,13 @@ public class AuthService {
         return true;
     }
 
-    public Optional<AuthResponse> login(String email, String rawPassword) {
-        return userRepository.findByEmail(email)
-                .filter(user -> passwordEncoder.matches(rawPassword, user.getPasswordHash()))
-                .map(user -> {
-                    String token = jwtService.generateToken(user);
-                    log.debug("Login bem sucedido para o usuário: {}", email);
-                    return new AuthResponse(token, "Bearer");
-                });
+    public String login(String email, String rawPassword) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, rawPassword)
+        );
+
+        User user = (User) authentication.getPrincipal();
+        return jwtService.generateToken(user);
     }
     
 
