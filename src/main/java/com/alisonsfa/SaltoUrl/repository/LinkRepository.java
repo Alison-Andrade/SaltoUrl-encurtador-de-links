@@ -9,4 +9,6 @@ import com.alisonsfa.SaltoUrl.domain.entity.Link;
 
 public interface LinkRepository extends JpaRepository<Link, UUID>{
     Optional<Link> findByCodeAndActiveTrue(String code);
+
+    Optional<Link> findByCode(String code);
 }

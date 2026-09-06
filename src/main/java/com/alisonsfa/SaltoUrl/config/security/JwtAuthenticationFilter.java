@@ -3,8 +3,6 @@ package com.alisonsfa.SaltoUrl.config.security;
 import java.io.IOException;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,12 +17,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Component 
+@Slf4j 
 public class JwtAuthenticationFilter extends OncePerRequestFilter{
-
-    @Value("${jwt.secret.key}")
-    private String secretKey;
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService; 
@@ -45,13 +42,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
                     jwt = cookie.getValue();
                     break;
                 }
-            }
-        }
-
-        if (jwt == null) {
-            final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                jwt = authHeader.substring(7);
             }
         }
 
@@ -82,7 +72,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
             }
 
         } catch (Exception e) {
-            
+            log.warn("Falha ao autenticar o usuário: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

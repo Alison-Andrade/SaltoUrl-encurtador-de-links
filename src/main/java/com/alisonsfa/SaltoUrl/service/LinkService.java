@@ -64,7 +64,7 @@ public class LinkService {
 
                 Link savedLink = linkRepository.save(link);
 
-                String shortUrl = "http://localhost:8080/" + savedLink.getCode();
+                String shortUrl = baseUrl + savedLink.getCode();
 
                 return new LinkResponse(
                     savedLink.getCode(),
@@ -108,7 +108,7 @@ public class LinkService {
                 codeBuilder.append(characters.charAt(index));
             }
             newCode = codeBuilder.toString();
-        } while (linkRepository.findByCodeAndActiveTrue(newCode).isPresent());
+        } while (linkRepository.findByCode(newCode).isPresent());
 
         return newCode;
     }

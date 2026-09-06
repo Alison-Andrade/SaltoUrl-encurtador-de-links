@@ -36,9 +36,10 @@ public class ClickEvent {
     @Column(updatable = false)
     private LocalDateTime clickedAt;
 
-    @Column(length = 64)
+    @Column(length = 64, nullable = false)
     private String ipHash;
 
+    @Column(nullable = false)
     private String userAgent;
     
     @Column(length = 2)

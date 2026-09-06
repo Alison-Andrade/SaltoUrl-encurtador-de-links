@@ -22,10 +22,10 @@ public class JwtService {
     @Value("${jwt.secret.key}")
     private String secretKey;
     
-    private static final long EXPIRATION_TIME = 86400000;
+    private static final long EXPIRATION_TIME = 1000 * 60 * 15; // 15 minutos
 
     private Key getSingnInKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes());
+        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateToken(UserDetails userDetails) {
