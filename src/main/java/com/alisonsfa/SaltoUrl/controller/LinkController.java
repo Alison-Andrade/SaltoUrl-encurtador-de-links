@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.alisonsfa.SaltoUrl.domain.entity.User;
 import com.alisonsfa.SaltoUrl.dto.LinkCreateRequest;
 import com.alisonsfa.SaltoUrl.dto.LinkResponse;
 import com.alisonsfa.SaltoUrl.service.LinkService;
@@ -50,12 +52,8 @@ public class LinkController {
 
     @PostMapping("/links")
     @ResponseStatus(HttpStatus.CREATED)
-    public LinkResponse create(@RequestBody @Valid LinkCreateRequest request) {
-        String userIdString = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        UUID userId = UUID.fromString(userIdString);
-
-        LinkResponse response = linkService.createLink(request.originalUrl(), userId);
-
+    public LinkResponse create(@AuthenticationPrincipal User user,@RequestBody @Valid LinkCreateRequest request) {
+        LinkResponse response = linkService.createLink(request.originalUrl(), user.getId());
         return response;
     }
 
