@@ -6,13 +6,15 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.alisonsfa.SaltoUrl.domain.entity.RefreshToken;
 import com.alisonsfa.SaltoUrl.domain.entity.User;
 import com.alisonsfa.SaltoUrl.repository.RefreshTokenRepository;
 
-import jakarta.transaction.Transactional;
 
 @Service 
 public class RefreshTokenService {
@@ -49,11 +51,11 @@ public class RefreshTokenService {
         String tokenHash = hashToken(rawToken);
 
         RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(tokenHash)
-                .orElseThrow(() -> new IllegalArgumentException("Refresh token inválido"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token inválido"));
 
         if (refreshToken.isRevoked() || refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(refreshToken);
-            throw new IllegalArgumentException("Refresh token inválido ou expirado");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token inválido ou expirado");
         }
 
         return refreshToken;

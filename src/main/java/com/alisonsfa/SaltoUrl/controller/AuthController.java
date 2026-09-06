@@ -84,7 +84,7 @@ public class AuthController {
         String rawRefreshToken = extractCookie(request, "refreshToken");
 
         if (rawRefreshToken == null) {
-            throw new IllegalArgumentException("Refresh token não encontrado");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token não encontrado");
         }
 
         RefreshToken currentRefreshToken = refreshTokenService.verifyAndRotate(rawRefreshToken);
@@ -115,6 +115,36 @@ public class AuthController {
         return new AuthResponse("Refresh token atualizado com sucesso", user.getEmail());
     }
 
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        String rawRefreshToken = extractCookie(request, "refreshToken");
+
+        if (rawRefreshToken != null) {
+            refreshTokenService.revokeToken(rawRefreshToken);
+        }
+
+        ResponseCookie cookie = ResponseCookie.from("jwt", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
+
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+    }
+    
+
     private String extractCookie(HttpServletRequest request, String name) {
         if (request.getCookies() == null) return null;
         for (Cookie cookie : request.getCookies()) {
@@ -124,5 +154,7 @@ public class AuthController {
         }
         return null;
     }
+
+
     
 }

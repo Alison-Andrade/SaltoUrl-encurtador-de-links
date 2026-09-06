@@ -7,6 +7,7 @@ import java.security.SecureRandom;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.alisonsfa.SaltoUrl.domain.entity.Link;
@@ -26,6 +27,9 @@ public class LinkService {
     private final LinkRepository linkRepository;
     private final ClickEventPublisher clickEventPublisher;
     private final UserRepository userRepository;
+
+    @Value("${base.url}")
+    private String baseUrl;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
