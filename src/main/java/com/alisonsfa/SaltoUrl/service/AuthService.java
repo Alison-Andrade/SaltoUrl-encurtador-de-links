@@ -46,13 +46,13 @@ public class AuthService {
         return true;
     }
 
-    public String login(String email, String rawPassword) {
+    public User login(String email, String rawPassword) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, rawPassword)
         );
 
         User user = (User) authentication.getPrincipal();
-        return jwtService.generateToken(user);
+        return user;
     }
     
 

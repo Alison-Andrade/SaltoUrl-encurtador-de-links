@@ -11,11 +11,17 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.alisonsfa.SaltoUrl.config.security.JwtService;
+import com.alisonsfa.SaltoUrl.domain.entity.RefreshToken;
+import com.alisonsfa.SaltoUrl.domain.entity.User;
 import com.alisonsfa.SaltoUrl.dto.AuthResponse;
 import com.alisonsfa.SaltoUrl.dto.LoginRequest;
 import com.alisonsfa.SaltoUrl.dto.RegisterRequest;
 import com.alisonsfa.SaltoUrl.service.AuthService;
+import com.alisonsfa.SaltoUrl.service.RefreshTokenService;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
@@ -23,9 +29,13 @@ import jakarta.validation.Valid;
 @RequestMapping("/auth")
 public class AuthController {
     private final AuthService authService;
+    private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, JwtService jwtService, RefreshTokenService refreshTokenService) {
         this.authService = authService;
+        this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/register")
@@ -41,18 +51,78 @@ public class AuthController {
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
     public AuthResponse login(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
-        String token = authService.login(request.email(), request.password());
+        User user = authService.login(request.email(), request.password());
 
-        ResponseCookie cookie = ResponseCookie.from("jwt", token)
+        String jwt = jwtService.generateToken(user);
+        String rawRefreshToken = refreshTokenService.createRefreshToken(user);
+
+        ResponseCookie cookie = ResponseCookie.from("jwt", jwt)
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
-                .maxAge(7 * 24 * 60 * 60) // 7 dias
+                .maxAge(15 * 60) // 15 minutos
+                .sameSite("Strict")
+                .build();
+
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", rawRefreshToken)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(60 * 60 * 24 * 7) // 7 dias
                 .sameSite("Strict")
                 .build();
         
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
         return new AuthResponse("Login realizado com sucesso", request.email());
     }
+
+    @PostMapping("/refresh")
+    @ResponseStatus(HttpStatus.OK)
+    public AuthResponse refresh(HttpServletResponse response, HttpServletRequest request) {
+        String rawRefreshToken = extractCookie(request, "refreshToken");
+
+        if (rawRefreshToken == null) {
+            throw new IllegalArgumentException("Refresh token não encontrado");
+        }
+
+        RefreshToken currentRefreshToken = refreshTokenService.verifyAndRotate(rawRefreshToken);
+        User user = currentRefreshToken.getUser();
+
+        String newJwt = jwtService.generateToken(user);
+        String newRawRefreshToken = refreshTokenService.createRefreshToken(user);
+
+        ResponseCookie cookie = ResponseCookie.from("jwt", newJwt)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(15 * 60) // 15 minutos
+                .sameSite("Strict")
+                .build();
+
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", newRawRefreshToken)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(60 * 60 * 24 * 7) // 7 dias
+                .sameSite("Strict")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+
+        return new AuthResponse("Refresh token atualizado com sucesso", user.getEmail());
+    }
+
+    private String extractCookie(HttpServletRequest request, String name) {
+        if (request.getCookies() == null) return null;
+        for (Cookie cookie : request.getCookies()) {
+            if (name.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
+    }
+    
 }
