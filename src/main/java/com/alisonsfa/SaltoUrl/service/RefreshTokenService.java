@@ -2,6 +2,7 @@ package com.alisonsfa.SaltoUrl.service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -73,8 +74,8 @@ public class RefreshTokenService {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(hash);
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao gerar o hash do token", e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Algoritmo de criptografia SHA-256 não encontrado", e);
         }
     }
 

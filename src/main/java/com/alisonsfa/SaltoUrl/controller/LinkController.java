@@ -2,10 +2,14 @@ package com.alisonsfa.SaltoUrl.controller;
 
 import java.net.URI;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.alisonsfa.SaltoUrl.domain.entity.User;
 import com.alisonsfa.SaltoUrl.dto.LinkCreateRequest;
 import com.alisonsfa.SaltoUrl.dto.LinkResponse;
+import com.alisonsfa.SaltoUrl.dto.LinkStatsResponse;
 import com.alisonsfa.SaltoUrl.service.LinkService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -63,4 +68,28 @@ public class LinkController {
         return xfHeader.split(",")[0];
     }
     
+    @GetMapping("/links")
+    public Page<LinkResponse> listLinks(
+            @AuthenticationPrincipal User user, 
+            @PageableDefault(size = 10, sort = "createdAt") Pageable pageable) {
+        return linkService.getUserLinks(user.getId(), pageable);
+    }
+
+    @GetMapping("/links/{code}/stats")
+    public LinkStatsResponse getLinkStats(
+            @AuthenticationPrincipal User user, 
+            @PathVariable String code
+    ) {
+        return linkService.getLinkStats(code, user.getId());
+    }
+
+    @DeleteMapping("/links/{code}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deactivate(
+            @AuthenticationPrincipal User user, 
+            @PathVariable String code
+    ) {
+        linkService.deactivateLink(code, user.getId());
+    }
+
 }

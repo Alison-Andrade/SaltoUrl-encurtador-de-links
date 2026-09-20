@@ -4,17 +4,24 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.alisonsfa.SaltoUrl.domain.entity.Link;
 import com.alisonsfa.SaltoUrl.domain.entity.User;
 import com.alisonsfa.SaltoUrl.dto.LinkResponse;
+import com.alisonsfa.SaltoUrl.dto.LinkStatsResponse;
 import com.alisonsfa.SaltoUrl.messaging.ClickEventPayload;
 import com.alisonsfa.SaltoUrl.messaging.ClickEventPublisher;
+import com.alisonsfa.SaltoUrl.repository.ClickEventRepository;
 import com.alisonsfa.SaltoUrl.repository.LinkRepository;
 import com.alisonsfa.SaltoUrl.repository.UserRepository;
 
@@ -27,16 +34,18 @@ public class LinkService {
     private final LinkRepository linkRepository;
     private final ClickEventPublisher clickEventPublisher;
     private final UserRepository userRepository;
+    private final ClickEventRepository clickEventRepository;
 
     @Value("${base.url}")
     private String baseUrl;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public LinkService(LinkRepository linkRepository, UserRepository userRepository, ClickEventPublisher clickEventPublisher) {
+    public LinkService(LinkRepository linkRepository, UserRepository userRepository, ClickEventPublisher clickEventPublisher, ClickEventRepository clickEventRepository) {
         this.linkRepository = linkRepository;
         this.clickEventPublisher = clickEventPublisher;
         this.userRepository = userRepository;
+        this.clickEventRepository = clickEventRepository;
     }
 
     public Optional<String> processRedirect(String code, String rawIp, String userAgent) {
@@ -53,7 +62,7 @@ public class LinkService {
 
     public LinkResponse createLink(String originalUrl, UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o ID: " + userId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autenticado ou inexistente"));
         
                 String code = generateUniqueCode();
 
@@ -111,6 +120,49 @@ public class LinkService {
         } while (linkRepository.findByCode(newCode).isPresent());
 
         return newCode;
+    }
+
+    public LinkStatsResponse getLinkStats(String code, UUID userId) {
+        Link link = linkRepository.findByCodeAndUserId(code, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Link não encontrado para este usuário"));
+            
+        long totalClicks = clickEventRepository.countByLinkId(link.getId());
+        
+        List<LinkStatsResponse.RecentClickDto> recentClicks = clickEventRepository.findTop10ByLinkIdOrderByClickedAtDesc(link.getId())
+                .stream()
+                .map(click -> new LinkStatsResponse.RecentClickDto(click.getClickedAt(), click.getUserAgent(), click.getCountry()))
+                .toList();
+        
+        String shortUrl = baseUrl + "/" + link.getCode();
+        
+        return new LinkStatsResponse(
+            link.getCode(),
+            link.getOriginalUrl(),
+            shortUrl,
+            link.isActive(),
+            totalClicks,
+            link.getCreatedAt(),
+            link.getExpiresAt(),
+            recentClicks
+        );
+    }
+
+    public Page<LinkResponse> getUserLinks(UUID userId, Pageable pageable) {
+        return linkRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
+                .map(link -> new LinkResponse(
+                        link.getCode(), 
+                        link.getOriginalUrl(), 
+                        baseUrl + "/" + link.getCode(), 
+                        link.getCreatedAt()
+                ));
+    }
+
+    public void deactivateLink(String code, UUID userId) {
+        Link link = linkRepository.findByCodeAndUserId(code, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Link não encontrado para este usuário"));
+
+        link.setActive(false);
+        linkRepository.save(link);
     }
 
 }
