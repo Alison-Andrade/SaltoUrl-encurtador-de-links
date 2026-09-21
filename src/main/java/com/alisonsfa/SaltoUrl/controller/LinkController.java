@@ -56,7 +56,7 @@ public class LinkController {
     @PostMapping("/links")
     @ResponseStatus(HttpStatus.CREATED)
     public LinkResponse create(@AuthenticationPrincipal User user,@RequestBody @Valid LinkCreateRequest request) {
-        LinkResponse response = linkService.createLink(request.originalUrl(), user.getId());
+        LinkResponse response = linkService.createLink(request.originalUrl(), request.expiresAt(), user.getId());
         return response;
     }
 

@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -50,6 +51,7 @@ public class LinkService {
 
     public Optional<String> processRedirect(String code, String rawIp, String userAgent) {
         return linkRepository.findByCodeAndActiveTrue(code)
+                .filter(link -> link.getExpiresAt() == null || link.getExpiresAt().isAfter(LocalDateTime.now()))
                 .map(link -> {
                     String ipHash = hashIp(rawIp);
 
@@ -60,7 +62,7 @@ public class LinkService {
                 });
     }
 
-    public LinkResponse createLink(String originalUrl, UUID userId) {
+    public LinkResponse createLink(String originalUrl, LocalDateTime expiresAt, UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autenticado ou inexistente"));
         
@@ -70,6 +72,7 @@ public class LinkService {
                 link.setOriginalUrl(originalUrl);
                 link.setCode(code);
                 link.setUser(user);
+                link.setExpiresAt(expiresAt);
 
                 Link savedLink = linkRepository.save(link);
 
@@ -79,7 +82,8 @@ public class LinkService {
                     savedLink.getCode(),
                     savedLink.getOriginalUrl(),
                     shortUrl,
-                    savedLink.getCreatedAt()
+                    savedLink.getCreatedAt(),
+                    savedLink.getExpiresAt()
                 );
     }
 
@@ -153,7 +157,8 @@ public class LinkService {
                         link.getCode(), 
                         link.getOriginalUrl(), 
                         baseUrl + "/" + link.getCode(), 
-                        link.getCreatedAt()
+                        link.getCreatedAt(),
+                        link.getExpiresAt()
                 ));
     }
 
