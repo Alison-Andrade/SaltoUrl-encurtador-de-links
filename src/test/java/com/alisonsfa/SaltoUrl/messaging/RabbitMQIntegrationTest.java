@@ -6,9 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.context.annotation.Bean;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -19,19 +17,10 @@ import com.alisonsfa.SaltoUrl.domain.entity.User;
 import com.alisonsfa.SaltoUrl.repository.ClickEventRepository;
 import com.alisonsfa.SaltoUrl.repository.LinkRepository;
 import com.alisonsfa.SaltoUrl.repository.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest // Sobe o contexto inteiro do Spring (diferente do @DataJpaTest)
 @Testcontainers 
 class RabbitMQIntegrationTest {
-
-    @TestConfiguration
-    static class JacksonTestConfig {
-        @Bean
-        public ObjectMapper objectMapper() {
-            return new ObjectMapper();
-        }
-    }
 
     @Container 
     @ServiceConnection 
