@@ -25,7 +25,7 @@ public interface LinkRepository extends JpaRepository<Link, UUID>{
     @Query ("""
             UPDATE Link l
             SET l.active = false
-            WHERE l.active = true AND l.expiesAt IS NOT NULL AND l.expiresAt < :now
+            WHERE l.active = true AND l.expiresAt IS NOT NULL AND l.expiresAt < :now
             """)
     int deactivateExpiredLinks(@Param("now") LocalDateTime now);
 }
