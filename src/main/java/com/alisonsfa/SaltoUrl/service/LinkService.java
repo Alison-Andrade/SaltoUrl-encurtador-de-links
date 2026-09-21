@@ -76,7 +76,7 @@ public class LinkService {
 
                 Link savedLink = linkRepository.save(link);
 
-                String shortUrl = baseUrl + savedLink.getCode();
+                String shortUrl = buildShortUrl(savedLink.getCode());
 
                 return new LinkResponse(
                     savedLink.getCode(),
@@ -137,7 +137,7 @@ public class LinkService {
                 .map(click -> new LinkStatsResponse.RecentClickDto(click.getClickedAt(), click.getUserAgent(), click.getCountry()))
                 .toList();
         
-        String shortUrl = baseUrl + "/" + link.getCode();
+        String shortUrl = buildShortUrl(link.getCode());
         
         return new LinkStatsResponse(
             link.getCode(),
@@ -156,7 +156,7 @@ public class LinkService {
                 .map(link -> new LinkResponse(
                         link.getCode(), 
                         link.getOriginalUrl(), 
-                        baseUrl + "/" + link.getCode(), 
+                        buildShortUrl(link.getCode()), 
                         link.getCreatedAt(),
                         link.getExpiresAt()
                 ));
@@ -168,6 +168,13 @@ public class LinkService {
 
         link.setActive(false);
         linkRepository.save(link);
+    }
+
+    private String buildShortUrl(String code) {
+        if (baseUrl != null && baseUrl.endsWith("/")) {
+            return baseUrl + code;
+        }
+        return baseUrl + "/" + code;
     }
 
 }
