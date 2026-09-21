@@ -33,8 +33,8 @@ public class ClickEventListener {
             linkRepository.findById(payload.linkId()).ifPresent(link -> {
                 ClickEvent event = new ClickEvent();
                 event.setLink(link);
-                event.setIpHash(payload.ipHash());
-                event.setUserAgent(payload.userAgent());
+                event.setIpHash(payload.ipHash() != null ? payload.ipHash() : "unknown_ip");
+                event.setUserAgent(payload.userAgent() != null && !payload.userAgent().isBlank() ? payload.userAgent() : "Unknown");
                 event.setCountry(payload.country());
 
                 clickEventRepository.save(event);
